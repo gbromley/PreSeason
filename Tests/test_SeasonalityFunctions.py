@@ -1,7 +1,7 @@
 import unittest
 import os
 import numpy as np
-import seasonality.SeasonalityFunctions as sf
+import seasonality.seasonalityfunctions as sf
 
 ### Testing Section
 class TestFourier(unittest.TestCase):

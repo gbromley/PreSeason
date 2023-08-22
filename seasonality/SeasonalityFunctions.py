@@ -1,11 +1,5 @@
 
-
-### Import for functions ###
-
-### Imports for Relative Entropy Function ###
-import scipy.stats as ss
 import numpy as np
-import scipy.optimize as optimize
 
 def fourier_coefficients(tseries, num_harm, time=None):
        

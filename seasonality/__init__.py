@@ -1,1 +1,1 @@
-import Seasonality.SeasonalityFunctions
+import seasonality.seasonalityfunctions
