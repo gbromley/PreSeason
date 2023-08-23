@@ -2,29 +2,24 @@ import numpy as np
 import xarray as xr
 import seasonality.seasonalityfunctions as sf
 
-def find_starts(data):
-    ## Todo
+def B17_analysis_start(data):
     """
     Summary:
     --------
-    Calculates fourier series for data using:
+    Finds where to begin the wet season onset analysis period. Uses the minimum of the 1st harmonic.
     
     Input:
     ------
-        tseries: Mean annual daily precipitation data. Should be of length 365.
-        n: Number of harmonics to calculate
-        time: Integer array of len(tseries)
+        data: Time series of the annual precip cycle, length should be 365.
     
     Output:
     -------
-        a_n: Array of A_n fourier coefficients for Nth harmonics
-        b_n: Array of B_n fourier coefficients for Nth harmonics
-        var: Ratio of explained variance of nth harmonics
+        analysis_doy: The day of year that the onset analysis should begin.
     
     """
     
     output = xr.apply_ufunc(
-        sf.start_wet,
+        sf.first_harmonic_min,
         data,
         input_core_dims=[["dayofyear"]],
         exclude_dims=set(["dayofyear"]),
