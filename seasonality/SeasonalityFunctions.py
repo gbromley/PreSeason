@@ -106,3 +106,22 @@ def harmonic_smoothing(tseries, num_harm, time=None):
     
     return smoothed     
 
+def start_wet(tseries):
+    """
+    Summary:
+    --------
+    Calculates the start day for determining wet season onset/demise. 
+    Uses the minimum of the first harmonic.
+    
+    Input:
+    ------
+        tseries: Harmonic approximation to use
+    
+    Output:
+    -------
+        start_day: Calculation start day in julian days.
+    
+    """
+    harmonic = harmonic_smoothing(tseries,num_harm=1)
+    min_harmonic = np.argmin(harmonic)
+    return min_harmonic
