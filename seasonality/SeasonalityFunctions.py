@@ -106,7 +106,7 @@ def harmonic_smoothing(tseries, num_harm, time=None):
     
     return smoothed     
 
-def start_wet(tseries):
+def first_harmonic_min(tseries):
     """
     Summary:
     --------
