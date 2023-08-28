@@ -200,6 +200,15 @@ def demise_LM01(data, days, years, startWet):
         
     return demiseDOY
 
+"""
+def test_onsetB17(data, days, years, startWet):
+    output_onset_doy = onset_LM01(data, days, years, startWet)
+    
+    outlier_locs = sf.check_outliers(output_onset_doy)
+"""   
+    
+    
+
 def onset_B17(data, days, years, startWet):
     
     """
