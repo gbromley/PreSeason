@@ -121,53 +121,7 @@ def demise_LM01(data, days, years, startWet):
     days = days[::-1]
     years = years[::-1]
     
-    if len(days) != len(years):
-        raise ValueError('Length of days and years must be the same.')
-        
-    # Want to make sure we get all the input years before any trimming
-    unique_years = np.unique(years)
-    
-    demiseDOY = np.empty((len(unique_years)))
-    demiseDOY[:] = np.nan
-    
-
-
-    # Day of year is missing integer 60 which is February 29th.
-    # Need to add zero because a tuple is returned from np.where
-    temp_start_index = np.where(days == startWet)[0]
-    
-    # double check we have enough data for last onset calculation
-    if len(days[temp_start_index[-1]:]) < 180:
-        
-        # trim off data we can't use
-        data = data[temp_start_index[0]:temp_start_index[-1]]
-        days = days[temp_start_index[0]:temp_start_index[-1]]
-        years = years[temp_start_index[0]:temp_start_index[-1]]
-        
-    # Reindex start days with trimmed days  
-    # Need to add zero because a tuple is returned from np.where
-    start_day_index = np.where(days == startWet)[0]
-    
-    ### looping through start dates ###
-    for start_day in start_day_index:
-        
-        # Make analysis period 180 days in length. 
-        #TODO #check that 180 days matters
-        analysis_begin = start_day
-        analysis_end = start_day + 180
-        
-        analysis_days = days[analysis_begin:analysis_end]
-        analysis_years = years[analysis_begin:analysis_end]
-        
-        cumsum_data = np.cumsum(data[analysis_begin:analysis_end])
-        
-        # this returns the index of the data not the day
-        demise_index = np.argmin(cumsum_data)
-        demise_day = analysis_days[demise_index]
-        demise_year = analysis_years[demise_index]
-        
-        where_to_place = np.argwhere(unique_years == demise_year)[0][0]
-        demiseDOY[where_to_place] = demise_day
+    demiseDOY = onset_LM01(data, days, years, startWet)
         
         
     return demiseDOY
