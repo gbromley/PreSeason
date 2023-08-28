@@ -3,6 +3,7 @@ import numpy as np
 
 from scipy import signal
 
+# TODO move some of these functions to a utils file
 
 def findFirst_numpy(a, b):
     #TODO fill out function data
@@ -279,3 +280,120 @@ def find_ddt_demise(tseries, window=5):
     
     
     return index
+
+def mean_doy(input_array, days_in_year=365):
+    
+    """
+    Summary:
+    --------
+    Calculates the average of days in a given year using circular statistics. Would work for 
+    an average across years, if the dates can be converted to DOY. 
+    
+    Input:
+    ------
+        input_array: Numpy array of DOY. Needs to be less than 365. 
+
+    Output:
+    -------
+        mean_doy: Returns the mean of an array of integer days of year.
+    """
+    
+    #days_in_year = 365
+    # Circular mean
+    # Need to normalize to radians
+    sin_samp = np.sin((input_array)*2.*np.pi / (days_in_year))
+    cos_samp = np.cos((input_array)*2.*np.pi / (days_in_year))
+    sin_sum = np.sum(sin_samp)
+    cos_sum = np.sum(cos_samp)
+    
+    result = np.arctan2(sin_sum, cos_sum)
+    
+    doy_mean = result*(days_in_year)/2.0/np.pi
+    
+    if doy_mean < 0:
+        doy_mean = doy_mean + days_in_year
+    
+    return doy_mean
+   
+def median_doy(input_array, days_in_year=365):
+       
+    """
+    Summary:
+    --------
+    Calculates the median of days in a given year using circular statistics. Would work for 
+    a median across years, if the dates can be converted to DOY. 
+    
+    Input:
+    ------
+        input_array: Numpy array of DOY. Needs to be less than 365. 
+
+    Output:
+    -------
+        median_doy: Returns the median of an array of integer days of year.
+    """
+    
+    #days_in_year = 365
+    # Circular median
+    # Need to normalize to radians
+    sin_samp = np.sin((input_array)*2.*np.pi / (days_in_year))
+    cos_samp = np.cos((input_array)*2.*np.pi / (days_in_year))
+    sin_med = np.nanmedian(sin_samp)
+    cos_med = np.nanmedian(cos_samp)
+    
+    result = np.arctan2(sin_med, cos_med)
+    
+    doy_med = result*(days_in_year)/2.0/np.pi
+    
+    if doy_med < 0:
+        doy_med = doy_med + days_in_year
+    
+    return doy_med
+    
+def check_outliers(input_array, threshold=1.5, days_in_year=365.):
+    """
+    Summary:
+    --------
+    Calculates the outliers of input array based on IQR * threshold.
+    
+    Input:
+    ------
+        input_array: Positive array of days of year.
+        threshold: Value to apply to IAR
+    
+    Output:
+    -------
+        outl: Array of index locations of outliers
+    
+    """
+    
+    if np.any(np.isnan(input_array)):
+        
+        input_array[np.isnan(input_array)] = np.ma.masked
+    
+    if np.any(input_array < 0):
+        raise ValueError('Array should be entirely positive.')
+        
+    
+    
+    medians = median_doy(input_array)
+
+    # Need to subtract the medians so the percentile calculations are correct.
+    data_medians = input_array - medians
+    
+    # Converting dates close to the beginning and end of year
+    # Idea from Bombardi
+    pos=np.where(data_medians[:] > days_in_year * 0.5)[0]
+    if len(pos) > 0:
+        
+        data_medians[pos]=data_medians[pos]-days_in_year
+    
+    neg=np.where(data_medians[:] < days_in_year * (-0.5))[0]
+    if len(neg) > 0:
+        
+        data_medians[neg]=data_medians[neg]+days_in_year
+    
+    iqr=np.nanpercentile(data_medians,75)-np.nanpercentile(data_medians,25)
+    
+    outl=np.where(np.abs(data_medians) > iqr*threshold)[0]
+    
+    return outl
