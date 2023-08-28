@@ -358,7 +358,8 @@ def check_outliers(input_array, threshold=1.5, days_in_year=365.):
     Input:
     ------
         input_array: Positive array of days of year.
-        threshold: Value to apply to IAR
+        threshold: Value to apply to IAR. Default is 1.5.
+        days_in_year: Default set to 365, but users might want to use leap days?
     
     Output:
     -------

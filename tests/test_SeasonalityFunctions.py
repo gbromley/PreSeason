@@ -3,6 +3,7 @@ import os
 import numpy as np
 import seasonality.seasonalityfunctions as sf
 import time
+import scipy.stats as stats
 
 
 def timer_decorator(func):
@@ -66,3 +67,30 @@ class TestSmoothing(BaseTesting):
 
             test_output = sf.filter3(self.input_data_B17, num_passes=1)
             np.testing.assert_array_equal(self.check_data_B17, test_output)
+            
+class TestStats(BaseTesting):
+    def setUp(self):
+        self.doy_mean_data = np.array([120,180,270,360])
+        self.doy_outlier_data = np.array([350, 355, 364,1,3,4,220])
+    
+    def test_mean_doy(self):
+        output = sf.mean_doy(self.doy_mean_data)
+        check_data = stats.circmean(self.doy_mean_data, high=365)
+        
+        self.assertAlmostEqual(output,check_data)
+        
+    def test_median_doy(self):
+        # Using days_in_year=360 to make checking correctness easier
+        output = sf.median_doy(self.doy_mean_data, days_in_year=360)
+        check_median = 180.0
+        
+        self.assertAlmostEqual(output,check_median)
+        
+    def test_outliers(self):
+        output_outl = sf.check_outliers(self.doy_outlier_data, threshold=1.5)
+        
+        output_nooutl = sf.check_outliers(self.doy_outlier_data[:-1], threshold=1.5)
+        self.assertEqual(int(output_outl),6)
+        
+        self.assertFalse(np.any(output_nooutl))
+        
