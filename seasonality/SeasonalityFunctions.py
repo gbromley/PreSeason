@@ -419,68 +419,78 @@ def toDOY(time):
     DOY = np.array(pd.to_datetime(time).dayofyear)
     return DOY   
 
+def gen_dates_no_leap(start, num_years):
+    ###TODO
+    """_summary_
 
-def generate_p_da(years = 5, start = 2015):
-    
-    """
-    Summary:
-        Generates synthetic precipitation data for the testing of functions, and learning.
-
-    Raises:
-        TypeError: Years needs to be an int.
-        TypeError: start needs to be an int.
+    Args:
+        start (_type_): _description_
+        num_years (_type_): _description_
 
     Returns:
-        DataArray: Xarray data array is returned.
+        _type_: _description_
+    """
+    start_year = start
+    # 5 years, so 12-31 of 4th integer year
+    end_year = start + num_years - 1
+
+    s = pd.date_range(start=f'{start_year}-01-01', end=f'{end_year}-12-31', freq='D')
+
+    s = s[~((s.month == 2) & (s.day == 29))]
+    return s
+
+def generate_p_da(start = 2015, num_years = 5):
+    
+    """_summary_
+
+    Raises:
+        TypeError: _description_
+        TypeError: _description_
+
+    Returns:
+        _type_: _description_
     """
     
-    if not isinstance(years, int):
+    if not isinstance(num_years, int):
         raise TypeError('Year argument needs to be an integer!')
     
     if not isinstance(start, int):
         raise TypeError('Start argument needs to be an integer')
     
-    # Function to generate synthetic precipitation data
-    def generate_precipitation_data(years=5, start_year=2020):
-    
-
     # Create a date range for the specified number of years
-        dates = pd.date_range(start=f'{years}-01-01', periods=years*DAYS_IN_YEAR)
+    dates = gen_dates_no_leap(start, num_years)
 
-        # Create a baseline seasonal cycle of precipitation (sinusoidal)
-        # This simulates higher precipitation in certain months
-        seasonal_cycle = np.sin(2 * np.pi * dates.dayofyear / DAYS_IN_YEAR)
+    # Create a baseline seasonal cycle of precipitation (sinusoidal)
+    # This simulates higher precipitation in certain months
+    seasonal_cycle = np.sin(2 * np.pi * dates.dayofyear / DAYS_IN_YEAR)
 
-        # Add a stochastic component using Gaussian noise
-        stochastic_component = np.random.normal(0, 1, size=len(dates))
+    # Add a stochastic component using Gaussian noise
+    stochastic_component = np.random.normal(0, 1, size=len(dates))
 
-        # Combine the seasonal and stochastic components to get the final precipitation data
-        # Adjust the amplitude and mean to realistic values (e.g., mean=3, amplitude=2)
-        mean_precipitation = 3
-        amplitude = 2
-        precipitation_data = mean_precipitation + amplitude * seasonal_cycle + stochastic_component
+    # Combine the seasonal and stochastic components to get the final precipitation data
+    # Adjust the amplitude and mean to realistic values (e.g., mean=3, amplitude=2)
+    mean_precipitation = 3
+    amplitude = 2
+    precipitation_data = mean_precipitation + amplitude * seasonal_cycle + stochastic_component
 
-        # Ensure all precipitation values are non-negative
-        precipitation_data = np.maximum(precipitation_data, 0)
+    # Ensure all precipitation values are non-negative
+    precipitation_data = np.maximum(precipitation_data, 0)
 
-        # Create a DataFrame
-        da = xr.DataArray(
+    
+    # Create a DataFrame
+    da = xr.DataArray(
         data=precipitation_data,
         dims=["time"],
-        coords=dict(
-            time=dates,
-        ),
+        coords=dict(time=dates),
         attrs=dict(
             description="Synthetically generated precipitation data (fake).",
             units="mm",
         ),
     )
         
-        
-        df = pd.DataFrame({'Date': dates, 'Precipitation': precipitation_data})
-        df.set_index('Date', inplace=True)
+    da = da.sel(time=~((da.time.dt.month == 2) & (da.time.dt.day == 29)), drop=True)
 
-        return df
+    return da
 
 
 
