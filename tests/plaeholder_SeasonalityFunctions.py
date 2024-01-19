@@ -4,6 +4,7 @@ import numpy as np
 import seasonality.seasonalityfunctions as sf
 import time
 import scipy.stats as stats
+import pandas as pd
 
 
 def timer_decorator(func):
@@ -19,7 +20,7 @@ class BaseTesting(unittest.TestCase):
     
     @classmethod
     def loadData(cls):
-        cls.TestDir = os.getcwd()+'/tests/'
+        cls.TestDir = os.getcwd()+'/tests/test_data/'
         cls.ClimatologicalDailyP = np.load(cls.TestDir+'precip_dayofyear_testdata.npz')['annual_precip_cycle']
         
         cls.FourierCoefficients = np.load(cls.TestDir+'test_fourier_coefficients.npz')
@@ -67,6 +68,15 @@ class TestSmoothing(BaseTesting):
 
             test_output = sf.filter3(self.input_data_B17, num_passes=1)
             np.testing.assert_array_equal(self.check_data_B17, test_output)
+            
+        def test_inflection(self):
+            x = np.linspace(-10, 10, 400)
+            arr = x**3
+            out = sf.find_ddt_onset(arr)
+            answer = 195            
+            
+            np.testing.assert_equal(out, answer)
+            
             
 class TestStats(BaseTesting):
     def setUp(self):

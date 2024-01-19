@@ -1,33 +1,37 @@
 
 import numpy as np
+import pandas as pd
 
 from scipy import signal
 
-# TODO move some of these functions to a utils file
 
-def findFirst_numpy(a, b):
-    #TODO fill out function data
-    """
-    Summary:
-    --------
-    Calculates fourier series for data using:
-    
-    Input:
-    ------
-        tseries: Mean annual daily precipitation data. Should be of length 365.
-        n: Number of harmonics to calculate
-        time: Integer array of len(tseries)
-    
-    Output:
-    -------
-        a_n: Array of A_n fourier coefficients for Nth harmonics
-        b_n: Array of B_n fourier coefficients for Nth harmonics
-        var: Ratio of explained variance of nth harmonics
-    
-    """
-    inflection_array = np.lib.stride_tricks.sliding_window_view(a,len(b))
-    result = np.where(np.all(inflection_array == b, axis=1))
-    return result[0][0] if result else np.nan
+
+
+def find_sequence(arr, seq):
+    """_summary_
+
+    Args:
+        arr (_type_): _description_
+        seq (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
+    if len(seq) == 0:
+        return -1
+
+    # Masks for each element in the sequence
+    masks = [arr == val for val in seq]
+
+    # Find indices where the first element of the sequence occurs
+    first_elem_indices = np.where(masks[0])[0]
+
+    for idx in first_elem_indices:
+        #TODO clean up the following if statement
+        if all((idx + i < len(arr) and masks[i][idx + i]) for i in range(len(seq))):
+            return idx
+
+    return -1
 
 def fourier_coefficients(tseries, num_harm, time=None):
        
@@ -55,7 +59,7 @@ def fourier_coefficients(tseries, num_harm, time=None):
     
     length_data = len(tseries)
     # This function only works for data of length 365.
-    assert(length_data) == 365.0
+    #assert(length_data) == 365.0
     
     # Putting this here for future expansion if needed
     dt = 1.
@@ -143,13 +147,16 @@ def min_first_harmonic(tseries):
     
     Input:
     ------
-        tseries: Harmonic approximation to use
+        tseries: Annual precip cycle, length 356.
     
     Output:
     -------
         start_day: Calculation start day in julian days.
     
     """
+    ### Adding the assert so we make sure we use the correct data ###
+    
+    #assert(len(tseries) == 366)
     harmonic = smoothing_harmonic(tseries,num_harm=1)
     min_harmonic = np.argmin(harmonic)
     return min_harmonic
@@ -181,7 +188,7 @@ def smooth_B17(tseries, num_passes=50):
         smoothie=temp
     return smoothie
 
-#these all output the same as smooth-1-2-1 but might be faster on big arrays.
+
 def filter3(tseries,num_passes=1):
     # Swap out convolve with the code below
     # cumsum_vec = numpy.cumsum(numpy.insert(data, 0, 0)) 
@@ -194,7 +201,7 @@ def filter3(tseries,num_passes=1):
         inflection_array[1:-1] = signal.convolve(output, np.array([1,1,1]), "valid")/3
         output = inflection_array
     return output
- 
+
 def test_smooth(tseries,num_passes=1):
     output = np.zeros(len(tseries))
     inflection_array = output
@@ -205,12 +212,12 @@ def test_smooth(tseries,num_passes=1):
         
         output[i] = np.sum(tseries[i-1:i+2] * coef / 4)
     return output
-       
+
 def find_ddt_onset(tseries, window=5):
     """
     Summary:
     --------
-    Returns the 1st derivative of an array
+    Returns the first occurrence of an inflection point in the derivative time series.  
     
     Input:
     ------
@@ -222,64 +229,26 @@ def find_ddt_onset(tseries, window=5):
         output: First derivative of input series.
     
     """
+    # Find 1st derivative
     deriv = np.gradient(tseries)
     
-    # Numpy function that returns the sign of each element
-    # -1 if negative, 0 if 0, 1 if positive
-    sign_array = np.sign(deriv)
+    #find the differences in the derivative
+    diffs = np.diff(deriv)
     
+    #Convert diffs to positve or negative
+    sign_array = np.sign(diffs)
     
+    test_seq = np.ones(window)
+    center = int(np.ceil(window/2))
+    test_seq[0:center+1] = -1
     
-    
-    # build up the inflection window
-    inflection_array = np.ones(window)
-    
-    # Finding the middle of the window, rounded down if odd.
-    split = int(np.floor(window/2))
-    
-    # Make first half -1
-    inflection_array[:split] = -1
-    
-    index = findFirst_numpy(sign_array, inflection_array)
+    index = find_sequence(sign_array, test_seq)
     
     
     
     return index
 
-def find_ddt_demise(tseries, window=5):
-    """
-    Summary:
-    --------
-    Returns the 1st derivative of an array
-    
-    Input:
-    ------
-        tseries: Time series data, not limited to a particular length.
-        
-    
-    Output:
-    -------
-        output: First derivative of input series.
-    
-    """
-    deriv = np.gradient(tseries)
-    
-    # Numpy function that returns the sign of each element
-    # -1 if negative, 0 if 0, 1 if positive
-    sign_array = np.sign(deriv)
-    
-    # build up the inflection window
-    split = int(np.floor(window/2))
-    #mid = int(np.floor(window/2))
-    # build up the inflection window
-    inflection_array = np.ones(window)
-    inflection_array[split:] = -1
-    
-    index = findFirst_numpy(sign_array, inflection_array)
-    
-    
-    
-    return index
+
 
 def mean_doy(input_array, days_in_year=365):
     
@@ -314,7 +283,7 @@ def mean_doy(input_array, days_in_year=365):
         doy_mean = doy_mean + days_in_year
     
     return doy_mean
-   
+
 def median_doy(input_array, days_in_year=365):
        
     """
@@ -348,7 +317,7 @@ def median_doy(input_array, days_in_year=365):
         doy_med = doy_med + days_in_year
     
     return doy_med
-    
+
 def check_outliers(input_array, threshold=1.5, days_in_year=365.):
     """
     Summary:
@@ -367,9 +336,9 @@ def check_outliers(input_array, threshold=1.5, days_in_year=365.):
     
     """
     
-    if np.any(np.isnan(input_array)):
+    #if np.any(np.isnan(input_array)):
         
-        input_array[np.isnan(input_array)] = np.ma.masked
+        #input_array[np.isnan(input_array)] = np.ma.masked
     
     if np.any(input_array < 0):
         raise ValueError('Array should be entirely positive.')
@@ -399,7 +368,7 @@ def check_outliers(input_array, threshold=1.5, days_in_year=365.):
     
     return outl
 
-def cumul_anom(data, days, years, start_day, days_in_year=365):
+def cumul_anom(data, analysis_begin, analysis_end):
     
     # Day of year is missing integer 60 which is February 29th.
     # Need to add zero because a tuple is returned from np.where
@@ -418,41 +387,35 @@ def cumul_anom(data, days, years, start_day, days_in_year=365):
     #start_day_index = np.where(days_trimmed == startWet)[0]
     
     
-    analysis_begin = start_day
-    analysis_end = start_day + days_in_year
-    if (analysis_end > len(data)):
-        analysis_end = len(data)
-
-    analysis_days = days[analysis_begin:analysis_end]
-    analysis_years = years[analysis_begin:analysis_end]
-    
     cumsum_data = np.cumsum(data[analysis_begin:analysis_end])
     
-    # this returns the index of the data not the day
-    onset_index = np.argmin(cumsum_data)
-    onset_day = analysis_days[onset_index]
-    onset_year = analysis_years[onset_index]
-    return onset_day, onset_year #,onset_index
 
+    return cumsum_data #,onset_index
 
+def calc_annual_cycle(data):
+    annual_precip_cycle= data.groupby('time.dayofyear').mean(dim='time')
+    mask = (annual_precip_cycle['dayofyear'] != 60)
+    annual_precip_cycle = annual_precip_cycle.where(mask, drop=True)
+    return annual_precip_cycle
 
-
-def process_data_avail(data, days, years, startWet):
+def toDOY(time):
+    """
+    Summary:
+    --------
+        Returns the DOY from a date string
     
-    # Day of year is missing integer 60 which is February 29th.
-    # Need to add zero because a tuple is returned from np.where
-    temp_start_index = np.where(days == startWet)[0]
-    
-    # double check we have enough data for last onset calculation
-    if len(days[temp_start_index[-1]:]) < 180:
+    Input:
+    ------
+        time: Array of time values
         
-        # trim off data we can't use
-        data_trimmed = data[:temp_start_index[-1]]
-        days_trimmed = days[:temp_start_index[-1]]
-        years_trimmed = years[:temp_start_index[-1]]
-            
-    # Reindex start days with trimmed days  
-    # Need to add zero because a tuple is returned from np.where
-    start_day_index = np.where(days_trimmed == startWet)[0]
     
+    Output:
+    -------
+        output: Numpy array of values, 1-366, corresponding to the days in the input array.
     
+    """
+    if not isinstance(time, pd.DatetimeIndex):
+        raise TypeError('')
+    DOY = np.array(pd.to_datetime(time).dayofyear)
+    return DOY   
+
