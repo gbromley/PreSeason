@@ -1,10 +1,10 @@
 
 import numpy as np
 import pandas as pd
-
+import xarray as xr
 from scipy import signal
 
-
+DAYS_IN_YEAR = 365
 
 
 def find_sequence(arr, seq):
@@ -418,4 +418,71 @@ def toDOY(time):
         raise TypeError('')
     DOY = np.array(pd.to_datetime(time).dayofyear)
     return DOY   
+
+
+def generate_p_da(years = 5, start = 2015):
+    
+    """
+    Summary:
+        Generates synthetic precipitation data for the testing of functions, and learning.
+
+    Raises:
+        TypeError: Years needs to be an int.
+        TypeError: start needs to be an int.
+
+    Returns:
+        DataArray: Xarray data array is returned.
+    """
+    
+    if not isinstance(years, int):
+        raise TypeError('Year argument needs to be an integer!')
+    
+    if not isinstance(start, int):
+        raise TypeError('Start argument needs to be an integer')
+    
+    # Function to generate synthetic precipitation data
+    def generate_precipitation_data(years=5, start_year=2020):
+    
+
+    # Create a date range for the specified number of years
+        dates = pd.date_range(start=f'{years}-01-01', periods=years*DAYS_IN_YEAR)
+
+        # Create a baseline seasonal cycle of precipitation (sinusoidal)
+        # This simulates higher precipitation in certain months
+        seasonal_cycle = np.sin(2 * np.pi * dates.dayofyear / DAYS_IN_YEAR)
+
+        # Add a stochastic component using Gaussian noise
+        stochastic_component = np.random.normal(0, 1, size=len(dates))
+
+        # Combine the seasonal and stochastic components to get the final precipitation data
+        # Adjust the amplitude and mean to realistic values (e.g., mean=3, amplitude=2)
+        mean_precipitation = 3
+        amplitude = 2
+        precipitation_data = mean_precipitation + amplitude * seasonal_cycle + stochastic_component
+
+        # Ensure all precipitation values are non-negative
+        precipitation_data = np.maximum(precipitation_data, 0)
+
+        # Create a DataFrame
+        da = xr.DataArray(
+        data=precipitation_data,
+        dims=["time"],
+        coords=dict(
+            time=dates,
+        ),
+        attrs=dict(
+            description="Synthetically generated precipitation data (fake).",
+            units="mm",
+        ),
+    )
+        
+        
+        df = pd.DataFrame({'Date': dates, 'Precipitation': precipitation_data})
+        df.set_index('Date', inplace=True)
+
+        return df
+
+
+
+
 
