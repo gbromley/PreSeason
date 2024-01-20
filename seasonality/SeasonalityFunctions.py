@@ -33,7 +33,7 @@ def find_sequence(arr, seq):
 
     return -1
 
-def fourier_coefficients(tseries, num_harm, time=None):
+def fourier_coefficients(tseries, num_harm=3, time=None):
        
     """
     Summary:
@@ -56,8 +56,12 @@ def fourier_coefficients(tseries, num_harm, time=None):
         var: Ratio of explained variance of nth harmonics
         
     """
+    if not isinstance(tseries, np.ndarray):
+        raise TypeError('This function only accepts numpy arrays!')
     
     length_data = len(tseries)
+    
+    
     # This function only works for data of length 365.
     #assert(length_data) == 365.0
     
@@ -96,10 +100,10 @@ def fourier_coefficients(tseries, num_harm, time=None):
     P_total = a_0**2 + np.sum(P_harm)
         
     var = [P/P_total for P in P_harm]    
-       
+    
     return a_n, b_n, var
 
-def smoothing_harmonic(tseries, num_harm, time=None):
+def smoothing_harmonic(tseries, num_harm=3, time=None):
     """
     Summary:
     --------
@@ -116,6 +120,12 @@ def smoothing_harmonic(tseries, num_harm, time=None):
         smoothed: Numpy array of smoothed data using n harmonics. Should be same length as tseries.
     
     """
+    
+    if not isinstance(tseries, np.ndarray):
+        raise TypeError('This function only accepts numpy arrays!')
+    
+    
+    
     data_len = len(tseries)
     
     # Handling different combos
@@ -247,7 +257,6 @@ def find_ddt_onset(tseries, window=5):
     
     
     return index
-
 
 
 def mean_doy(input_array, days_in_year=365):

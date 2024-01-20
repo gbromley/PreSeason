@@ -65,7 +65,6 @@ def onset_LM01(data, startWet):
     input_core_dims=[["time"],["time"],[]],
     exclude_dims=set(["time"]),
     output_core_dims=[["year"]],
-    vectorize=True,
     dask = 'parallelized',
     #output_dtypes = 'datetime64[D]',
     #output_sizes={"data_jday": 71},

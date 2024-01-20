@@ -5,17 +5,31 @@ import seasonality.seasonalityfunctions as sf
 import time
 import scipy.stats as stats
 import pandas as pd
+import pytest
+#TODO Clean up the old unittest code.
+
+### Generate synthetic data ###
+@pytest.fixture
+def create_test_data():
+    #TODO make sure this doesn't violate a test rule 
+    data = sf.generate_p_da()
+    return data
 
 
-def timer_decorator(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.process_time()
-        result = func(*args, **kwargs)  # Call the original function
-        end_time = time.process_time()
-        print(f"{func.__name__} ran in {end_time - start_time:.4f} seconds")
-        return result
-    return wrapper
+functions_to_test = [sf.fourier_coefficients, sf.smoothing_harmonic]
 
+input_types = [5, 'five', 5.7, list([0,1,2])]
+@pytest.mark.parametrize('types', input_types) 
+@pytest.mark.parametrize('func', functions_to_test)
+def test_all_func_inputs(func, types):  
+    with pytest.raises(TypeError):
+        func(types)
+
+    
+    
+    
+    
+    
 class BaseTesting(unittest.TestCase):
     
     @classmethod
@@ -104,3 +118,12 @@ class TestStats(BaseTesting):
         
         self.assertFalse(np.any(output_nooutl))
         
+def test_calc_annual_cycle(create_test_data):
+    data = create_test_data
+    output = sf.calc_annual_cycle(data)
+    assert len(output) == 365
+    
+
+def test_start_wet():
+#TODO
+    pass
