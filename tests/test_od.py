@@ -8,3 +8,7 @@ import pandas as pd
 
 DAYS_IN_YEAR = 365
 
+def test_start_wet():
+#TODO
+    pass
+

@@ -65,13 +65,32 @@ def onset_LM01(data, startWet):
     input_core_dims=[["time"],["time"],[]],
     exclude_dims=set(["time"]),
     output_core_dims=[["year"]],
+    vectorize= True,
+    dask = 'parallelized',
+    #output_dtypes = 'datetime64[D]',
+    #output_sizes={"data_jday": 71},
+    )
+    return output
+
+def demise_LM01(data, startWet):
+    
+    output = xr.apply_ufunc(
+    _demise_LM01,
+    data.load(),
+    data.time,
+    startWet,
+    input_core_dims=[["time"],["time"],[]],
+    exclude_dims=set(["time"]),
+    output_core_dims=[["year"]],
+    vectorize= True,
     dask = 'parallelized',
     #output_dtypes = 'datetime64[D]',
     #output_sizes={"data_jday": 71},
     )
     return output   
-def _onset_LM01(data, time, startWet):
-    
+
+#TODO Add check for all positive data. This requres anomalies, which should not all be positive.
+def _onset_LM01(data, time, startWet):    
     """
     Summary:
     --------
@@ -105,10 +124,11 @@ def _onset_LM01(data, time, startWet):
     onsetDOY[:] = np.nan
     
     
+    
 
     # Day of year is missing integer 60 which is February 29th.
     # Need to add zero because a tuple is returned from np.where
-    start_index = np.where(days == startWet)[0]
+    start_index = np.where(days == startWet+1)[0]
     
     
     
@@ -130,7 +150,8 @@ def _onset_LM01(data, time, startWet):
         
         cumsum_data = sf.cumul_anom(data, analysis_begin, analysis_end)
         
-            # this returns the index of the data not the day
+        
+        # this returns the index of the data not the day
         onset_index = np.argmin(cumsum_data)
         onset_day = analysis_days[onset_index]
         onset_year = analysis_years[onset_index]
@@ -140,7 +161,7 @@ def _onset_LM01(data, time, startWet):
         
     return onsetDOY
 
-def demise_LM01(data, startWet):
+def _demise_LM01(data, time, startWet):
     """
     Summary:
     --------
@@ -164,16 +185,49 @@ def demise_LM01(data, startWet):
     
     
     data = data[::-1]
-    days = days[::-1]
-    years = years[::-1]
+    time = time[::-1]
     
-    demiseDOY = onset_LM01(data, days, years, startWet)
+    
+    demiseDOY = _onset_LM01(data, time, startWet)
         
         
     return demiseDOY
 
-
 def onset_B17(data, startWet):
+    
+    output = xr.apply_ufunc(
+    _onset_B17,
+    data.load(),
+    data.time,
+    startWet,
+    input_core_dims=[["time"],["time"],[]],
+    exclude_dims=set(["time"]),
+    output_core_dims=[["year"]],
+    vectorize= True,
+    dask = 'parallelized',
+    #output_dtypes = 'datetime64[D]',
+    #output_sizes={"data_jday": 71},
+    )
+    return output
+
+def demise_b17(data, startWet):
+    
+    output = xr.apply_ufunc(
+    _demise_B17,
+    data.load(),
+    data.time,
+    startWet,
+    input_core_dims=[["time"],["time"],[]],
+    exclude_dims=set(["time"]),
+    output_core_dims=[["year"]],
+    vectorize= True,
+    dask = 'parallelized',
+    #output_dtypes = 'datetime64[D]',
+    #output_sizes={"data_jday": 71},
+    )
+    return output
+    
+def _onset_B17(data, time, startWet):
     
     """
     Summary:
@@ -198,6 +252,7 @@ def onset_B17(data, startWet):
     years = np.array(time.year)
     days = np.array(time.dayofyear)
     
+    
     #TODO These tests can move to data 
     if len(days) != len(years):
         raise ValueError('Length of days and years must be the same.')
@@ -208,18 +263,20 @@ def onset_B17(data, startWet):
     doy_b17 = np.empty(len(unique_years))
     doy_b17[:] = np.nan
     
-    onsetDOY = onset_LM01(data, startWet)
+    onsetDOY = _onset_LM01(data, time, startWet)
 
     # Day of year is missing integer 60 which is February 29th. 
     # Need to add zero because a tuple is returned from np.where
     
-    
     outliers = sf.check_outliers(onsetDOY)
     
     
-    onsetDOY[outliers] = np.nan
+    if np.any(outliers):
+        
+        onsetDOY[outliers] = np.nan
     
-    start_day_index = np.where(days == startWet)[0]
+    #TODO Days and startwet are off by one
+    start_day_index = np.where(days == startWet+1)[0]
     
     ### looping through start dates ###
     for start_day in start_day_index:
@@ -268,15 +325,17 @@ def onset_B17(data, startWet):
         
         
     
-    onsetDOY[outliers] = doy_b17[outliers]
+    onsetDOY = doy_b17
     
     outliers_3 = sf.check_outliers(onsetDOY, threshold=3.)
+    if np.any(outliers_3):
+        
+        onsetDOY[outliers_3] = np.nan
     
-    onsetDOY[outliers_3] = np.nan
     
     return onsetDOY
     
-def demise_B17(data, days, years, startWet):
+def _demise_B17(data, time,  startWet):
     
     """
     Summary:
@@ -299,10 +358,9 @@ def demise_B17(data, days, years, startWet):
     # TODO move lines 206-250 to seperate class or function
     
     data = data[::-1]
-    days = days[::-1]
-    years = years[::-1] 
+    time = data.time[::-1]
     
-    demiseDOY = onset_B17(data, days, years, startWet)
+    demiseDOY = _onset_B17(data, time, startWet)
         
     return demiseDOY
     

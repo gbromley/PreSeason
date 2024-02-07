@@ -4,6 +4,7 @@ import pandas as pd
 import xarray as xr
 from scipy import signal
 
+#TODO Set this value with a function
 DAYS_IN_YEAR = 365
 
 
@@ -188,18 +189,27 @@ def smooth_B17(tseries, num_passes=50):
     -------
         smoothie: Smoothed time series    
     """
-    smoothie = tseries
-    temp = tseries
+    if np.all(np.isnan(tseries)):
+        nans = np.empty_like(tseries)
+        nans[:] = np.nan
+        return nans
+    
+    tseries = np.nan_to_num(tseries)
+    
+    smoothie = np.copy(tseries)
+    temp = np.copy(tseries)
     
     for n in np.arange(0,num_passes):
         temp[0] = 0.5*(smoothie[0]+smoothie[1])
         temp[-1] = 0.5*(smoothie[-1]+smoothie[-2])
         temp[1:-1] = 0.25*smoothie[0:-2] + 0.5*smoothie[1:-1]+0.25*smoothie[2:]
-        smoothie=temp
+        smoothie = temp
     return smoothie
 
 
 def filter3(tseries,num_passes=1):
+    if not isinstance(tseries, np.ndarray):
+        raise TypeError('This function only accepts numpy arrays!')
     # Swap out convolve with the code below
     # cumsum_vec = numpy.cumsum(numpy.insert(data, 0, 0)) 
     # ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
@@ -213,7 +223,8 @@ def filter3(tseries,num_passes=1):
     return output
 
 def test_smooth(tseries,num_passes=1):
-    output = np.zeros(len(tseries))
+    pass
+    """ output = np.zeros(len(tseries))
     inflection_array = output
     coef= np.array([1,2,1])
     output[0] = np.mean(tseries[0:2])
@@ -221,9 +232,10 @@ def test_smooth(tseries,num_passes=1):
     for i in np.arange(1,len(tseries) - 1,1):
         
         output[i] = np.sum(tseries[i-1:i+2] * coef / 4)
-    return output
+    return output """
 
 def find_ddt_onset(tseries, window=5):
+    #TODO Test the window part of the function
     """
     Summary:
     --------
@@ -239,6 +251,8 @@ def find_ddt_onset(tseries, window=5):
         output: First derivative of input series.
     
     """
+    if not isinstance(tseries, np.ndarray):
+        raise TypeError('This function only accepts numpy arrays!')
     # Find 1st derivative
     deriv = np.gradient(tseries)
     
@@ -276,6 +290,8 @@ def mean_doy(input_array, days_in_year=365):
         mean_doy: Returns the mean of an array of integer days of year.
     """
     
+    if np.all(np.isnan(input_array)):
+        return np.nan
     #days_in_year = 365
     # Circular mean
     # Need to normalize to radians
@@ -310,6 +326,8 @@ def median_doy(input_array, days_in_year=365):
         median_doy: Returns the median of an array of integer days of year.
     """
     
+    if np.all(np.isnan(input_array)):
+        return np.nan
     #days_in_year = 365
     # Circular median
     # Need to normalize to radians
@@ -348,6 +366,8 @@ def check_outliers(input_array, threshold=1.5, days_in_year=365.):
     #if np.any(np.isnan(input_array)):
         
         #input_array[np.isnan(input_array)] = np.ma.masked
+    if np.all(np.isnan(input_array)):
+        return (np.empty(0),)
     
     if np.any(input_array < 0):
         raise ValueError('Array should be entirely positive.')
