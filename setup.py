@@ -1,3 +1,3 @@
 from setuptools import setup, find_packages
 
-setup(name='PrecipitationSeasonality', version='0.0.1', packages=find_packages())
+setup(name='PreSeason', version='0.0.1', packages=find_packages())
