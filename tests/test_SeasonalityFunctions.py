@@ -4,22 +4,41 @@ import numpy as np
 import seasonality.seasonalityfunctions as sf
 import time
 import scipy.stats as stats
+import pandas as pd
+import pytest
+#TODO Clean up the old unittest code.
+
+### Generate synthetic data ###
+@pytest.fixture
+def create_synthetic_xr_dataarray():
+    #TODO make sure this doesn't violate a test rule 
+    data = sf.generate_p_da()
+    return data
+
+@pytest.fixture
+def create_synthetic_pd_df():
+    data = sf.generate_p_da()
+    return data
 
 
-def timer_decorator(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.process_time()
-        result = func(*args, **kwargs)  # Call the original function
-        end_time = time.process_time()
-        print(f"{func.__name__} ran in {end_time - start_time:.4f} seconds")
-        return result
-    return wrapper
+# Testing functions that share similar inputs
+functions_to_test = [sf.fourier_coefficients, sf.smoothing_harmonic, sf.min_first_harmonic, sf.smooth_B17, sf.filter3, sf.find_ddt_onset, sf.cumul_anom]
+
+#Testing common input types to make sure functions don't fail silently
+input_types = [5, 'five', 5.7, list([0,1,2]), create_synthetic_xr_dataarray, create_synthetic_pd_df]
+
+@pytest.mark.parametrize('types', input_types) 
+@pytest.mark.parametrize('func', functions_to_test)
+def test_tseries_input(func, types):
+    with pytest.raises(TypeError):
+        func(types) 
+
 
 class BaseTesting(unittest.TestCase):
     
     @classmethod
     def loadData(cls):
-        cls.TestDir = os.getcwd()+'/tests/'
+        cls.TestDir = os.getcwd()+'/tests/test_data/'
         cls.ClimatologicalDailyP = np.load(cls.TestDir+'precip_dayofyear_testdata.npz')['annual_precip_cycle']
         
         cls.FourierCoefficients = np.load(cls.TestDir+'test_fourier_coefficients.npz')
@@ -30,7 +49,6 @@ class BaseTesting(unittest.TestCase):
         cls.loadData()
         return super().setUpClass()
 
-### Testing Section
 class TestFourier(BaseTesting):
     def setUp(self):
         self.setUpClass()
@@ -44,8 +62,6 @@ class TestFourier(BaseTesting):
         self.assertTrue(test_a_n)
         self.assertTrue(test_b_n)
         self.assertTrue(test_var_n)
-        
-    
 
 class TestSmoothing(BaseTesting):
         def setUp(self):
@@ -68,6 +84,14 @@ class TestSmoothing(BaseTesting):
             test_output = sf.filter3(self.input_data_B17, num_passes=1)
             np.testing.assert_array_equal(self.check_data_B17, test_output)
             
+        def test_inflection(self):
+            x = np.linspace(-10, 10, 400)
+            arr = x**3
+            out = sf.find_ddt_onset(arr)
+            answer = 195            
+            
+            np.testing.assert_equal(out, answer)
+
 class TestStats(BaseTesting):
     def setUp(self):
         self.doy_mean_data = np.array([120,180,270,360])
@@ -93,4 +117,20 @@ class TestStats(BaseTesting):
         self.assertEqual(int(output_outl),6)
         
         self.assertFalse(np.any(output_nooutl))
-        
+
+def test_calc_annual_cycle(create_synthetic_xr_dataarray):
+    data = create_synthetic_xr_dataarray
+    output = sf.calc_annual_cycle(data)
+    assert len(output) == 365
+
+
+def test_smooth_b17_data_with_nans():
+    test_data = np.arange(0, 20.5, 1)
+    
+    index = np.array([0,7,20])
+    test_data[index] = np.nan 
+    
+    output = sf.smooth_B17(test_data)
+    
+    check =  not np.all(np.isnan(output))
+    assert(check == True)
