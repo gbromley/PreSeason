@@ -234,7 +234,7 @@ def test_smooth(tseries,num_passes=1):
         output[i] = np.sum(tseries[i-1:i+2] * coef / 4)
     return output """
 
-def find_ddt_onset(tseries, window=5):
+def find_ddt_onset(tseries, window=6):
     #TODO Test the window part of the function
     """
     Summary:
@@ -256,15 +256,13 @@ def find_ddt_onset(tseries, window=5):
     # Find 1st derivative
     deriv = np.gradient(tseries)
     
-    #find the differences in the derivative
-    diffs = np.diff(deriv)
     
     #Convert diffs to positve or negative
-    sign_array = np.sign(diffs)
+    sign_array = np.sign(deriv)
     
     test_seq = np.ones(window)
     center = int(np.ceil(window/2))
-    test_seq[0:center+1] = -1
+    test_seq[0:center] = -1
     
     index = find_sequence(sign_array, test_seq)
     
@@ -310,7 +308,7 @@ def mean_doy(input_array, days_in_year=365):
     return doy_mean
 
 def median_doy(input_array, days_in_year=365):
-       
+
     """
     Summary:
     --------

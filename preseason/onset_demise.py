@@ -1,6 +1,6 @@
 import numpy as np
 import xarray as xr
-import Preseason.seasonalityfunctions as sf
+import preseason.tools as sf
 import pandas as pd
 
 # Constants Used
@@ -41,7 +41,7 @@ def B17_analysis_start(data, dim='dayofyear'):
         analysis_doy: The day of year that the onset analysis should begin.
     
     """
-    
+
         #TODO Remove vectorize=True
     output = xr.apply_ufunc(
         sf.min_first_harmonic,
@@ -57,6 +57,7 @@ def B17_analysis_start(data, dim='dayofyear'):
 
 def onset_LM01(data, startWet):
     
+
     output = xr.apply_ufunc(
     _onset_LM01,
     data.load(),
@@ -70,10 +71,12 @@ def onset_LM01(data, startWet):
     #output_dtypes = 'datetime64[D]',
     #output_sizes={"data_jday": 71},
     )
+    #time_out = np.unique(data.time.dt.year)
+    output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
     return output
 
 def demise_LM01(data, startWet):
-    
+
     output = xr.apply_ufunc(
     _demise_LM01,
     data.load(),
@@ -87,10 +90,12 @@ def demise_LM01(data, startWet):
     #output_dtypes = 'datetime64[D]',
     #output_sizes={"data_jday": 71},
     )
+    #time_out = np.unique(data.time.dt.year)
+    output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
     return output   
 
 #TODO Add check for all positive data. This requres anomalies, which should not all be positive.
-def _onset_LM01(data, time, startWet):    
+def _onset_LM01(data, time, startWet):   
     """
     Summary:
     --------
@@ -110,6 +115,8 @@ def _onset_LM01(data, time, startWet):
     
     """
     
+    
+    
     time = pd.to_datetime(time)
     years = np.array(time.year)
     days = np.array(time.dayofyear)
@@ -123,6 +130,8 @@ def _onset_LM01(data, time, startWet):
     onsetDOY = np.empty((len(unique_years)))
     onsetDOY[:] = np.nan
     
+    if np.all(np.isnan(data)):
+        return onsetDOY
     
     
 
@@ -183,6 +192,7 @@ def _demise_LM01(data, time, startWet):
     """
     # reverse input for retrospective calculation
     
+
     
     data = data[::-1]
     time = time[::-1]
@@ -194,6 +204,7 @@ def _demise_LM01(data, time, startWet):
     return demiseDOY
 
 def onset_B17(data, startWet):
+
     
     output = xr.apply_ufunc(
     _onset_B17,
@@ -208,13 +219,15 @@ def onset_B17(data, startWet):
     #output_dtypes = 'datetime64[D]',
     #output_sizes={"data_jday": 71},
     )
+    #time_out = np.unique(data.time.dt.year)
+    output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
     return output
 
-def demise_b17(data, startWet):
+def demise_B17(data, startWet):
     
     output = xr.apply_ufunc(
     _demise_B17,
-    data.load(),
+    data.load(), #TODO This needs to be fixed
     data.time,
     startWet,
     input_core_dims=[["time"],["time"],[]],
@@ -225,6 +238,8 @@ def demise_b17(data, startWet):
     #output_dtypes = 'datetime64[D]',
     #output_sizes={"data_jday": 71},
     )
+    #time_out = np.unique(data.time.dt.year)
+    output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
     return output
     
 def _onset_B17(data, time, startWet):
@@ -263,8 +278,16 @@ def _onset_B17(data, time, startWet):
     doy_b17 = np.empty(len(unique_years))
     doy_b17[:] = np.nan
     
+    if np.all(np.isnan(data)):
+        return doy_b17
+    
     onsetDOY = _onset_LM01(data, time, startWet)
-
+    
+    if np.all(onsetDOY == onsetDOY[0]):
+        
+        return doy_b17
+    
+    
     # Day of year is missing integer 60 which is February 29th. 
     # Need to add zero because a tuple is returned from np.where
     
@@ -356,10 +379,9 @@ def _demise_B17(data, time,  startWet):
     
     """
     # TODO move lines 206-250 to seperate class or function
-    
     data = data[::-1]
-    time = data.time[::-1]
-    
+    time = time[::-1]
+
     demiseDOY = _onset_B17(data, time, startWet)
         
     return demiseDOY
