@@ -139,4 +139,64 @@ def plotOnsetTS(p_anom, onset_data, demise_data, time_slice, loc = None, iloc = 
     plt.show()
     
     return None
+
+
+def plot_spatial_data(dataarray, projection=ccrs.PlateCarree(), cmap ='twilight', vmax = 365, vmin = 1, title='Spatial Data Plot', var='data_to_plot'):
+    """
+    Plots a spatial figure of a variable from an xarray DataArray.
+
+    :param dataarray: xarray DataArray containing the geospatial data to be plotted.
+    :param projection: Cartopy CRS projection. Defaults to PlateCarree.
+    :param title: Title of the plot.
+    """
+    
+    states_provinces = cfeature.NaturalEarthFeature(
+    category='cultural',
+    name='admin_1_states_provinces_lines',
+    scale='10m')
+    map_proj = ccrs.LambertConformal(central_longitude=-95, central_latitude=45)
+    #cmap = mpl.cm.RdBu_r
+
+    norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+    fig, ax = plt.subplots(1, 1, figsize=(10, 13), dpi=600,  subplot_kw={'projection': projection})
+    p = dataarray.plot(ax=ax,transform=ccrs.PlateCarree(), add_colorbar=False, cmap=cmap,alpha = 0.8, norm=norm)
+
+
+    ### Setting 1st plot parameters ###
+    ax.coastlines(edgecolor='black', linewidth=2)
+    ax.add_feature(cartopy.feature.BORDERS, edgecolor='black', linewidth=2)
+    ax.add_feature(cfeature.STATES, edgecolor='black', linewidth=2)
+    ax.add_feature(cfeature.LAKES, alpha=0.5, edgecolor='blue')
+    ax.add_feature(cfeature.RIVERS, color='blue')
+    #ax1.set_xticks(np.arange(-180,181, 40))
+    #ax1.set_yticks(np.arange(-90,91,15))
+    
+    ###TODO Change shape files to be from internet
+    drainage = shapereader.Reader('/Users/gbromley/Downloads/major_basins_of_the_world_0_0_0/Major_Basins_of_the_World.shp')
+    #for feature in drainage.records():
+    #    geometry = feature.geometry
+    #    ax.add_geometries([geometry], ccrs.PlateCarree(), facecolor='none', edgecolor='black', linewidth=2, linestyle='--')
+    #at = AnchoredText("a",
+    #                    loc='upper left', prop=dict(size=8), frameon=True,)
+    #at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+    #ax1.add_artist(at)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.1, axes_class=plt.Axes)
+    plt.colorbar(p, cax=cax, label=var)
+    
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, linewidth=2, color='black', alpha=0.5, linestyle='--')
+    gl.xlocator = mticker.FixedLocator([280-360, 285-360, 290-360])
+    gl.ylocator = mticker.FixedLocator([-5, -10, -15])
+    gl.left_labels = True
+    gl.right_labels = False
+    gl.top_labels = False
+    gl.bottom_labels = True
+
+    # Add a title
+    ax.set_title(title, loc='center')
+
+    # Show the plot
+    plt.show()
     
