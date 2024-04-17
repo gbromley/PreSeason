@@ -4,11 +4,14 @@ import matplotlib.dates as mdates
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.ticker as mticker
 
+import cartopy
 import cartopy.io.shapereader as shapereader
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
+import pandas as pd
+import numpy as np
 
 
 def plotOnsetTS(p_anom, onset_data, demise_data, time_slice, loc = None, iloc = None):
@@ -158,7 +161,7 @@ def plot_spatial_data(dataarray, projection=ccrs.PlateCarree(), cmap ='twilight'
     #cmap = mpl.cm.RdBu_r
 
     norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
-    fig, ax = plt.subplots(1, 1, figsize=(10, 13), dpi=600,  subplot_kw={'projection': projection})
+    fig, ax = plt.subplots(1, 1, figsize=(16, 9), dpi=600,  subplot_kw={'projection': projection})
     p = dataarray.plot(ax=ax,transform=ccrs.PlateCarree(), add_colorbar=False, cmap=cmap,alpha = 0.8, norm=norm)
 
 
