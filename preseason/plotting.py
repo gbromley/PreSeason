@@ -174,14 +174,6 @@ def plot_spatial_data(dataarray, projection=ccrs.PlateCarree(), cmap ='twilight'
     #ax1.set_xticks(np.arange(-180,181, 40))
     #ax1.set_yticks(np.arange(-90,91,15))
     
-    ###TODO Change shape files to be from internet
-    drainage = shapereader.Reader('/Users/gbromley/Downloads/major_basins_of_the_world_0_0_0/Major_Basins_of_the_World.shp')
-    #for feature in drainage.records():
-    #    geometry = feature.geometry
-    #    ax.add_geometries([geometry], ccrs.PlateCarree(), facecolor='none', edgecolor='black', linewidth=2, linestyle='--')
-    #at = AnchoredText("a",
-    #                    loc='upper left', prop=dict(size=8), frameon=True,)
-    #at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
     #ax1.add_artist(at)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1, axes_class=plt.Axes)

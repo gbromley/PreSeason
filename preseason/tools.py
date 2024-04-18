@@ -343,6 +343,32 @@ def median_doy(input_array, days_in_year=365):
     
     return doy_med
 
+def common_doy(samples, high, low):
+    # Ensure samples are array-like and size is not zero
+    if samples.size == 0:
+        NaN = _get_nan(samples)
+        return NaN, NaN, NaN
+
+    # Recast samples as radians that range between 0 and 2 pi and calculate
+    # the sine and cosine
+    sin_samp = sin((samples - low)*2.*pi / (high - low))
+    cos_samp = cos((samples - low)*2.*pi / (high - low))
+
+    return samples, sin_samp, cos_samp
+def mean_doy_scipy(input):
+        samples, sin_samp, cos_samp = _circfuncs_common(samples, high, low)
+        sin_sum = sin_samp.sum(axis)
+        cos_sum = cos_samp.sum(axis)
+        res = arctan2(sin_sum, cos_sum)
+
+        res = np.asarray(res)
+        res[res < 0] += 2*pi
+        res = res[()]
+        
+
+        return res*(high - low)/2.0/pi + low
+    
+
 def check_outliers(input_array, threshold=1.5, days_in_year=365.):
     """
     Summary:
