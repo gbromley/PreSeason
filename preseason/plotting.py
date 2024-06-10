@@ -18,30 +18,45 @@ def plotOnsetTS(p_anom, onset_data, demise_data, time_slice, loc = None, iloc = 
     ### Take precip data, calculated onsets, make a nice TS figure
     #TODO error handle on the other arguments
     ### Argument Handling ###
-    if (loc is None and iloc is None) or (loc is not None and iloc is not None):
+    if (loc is not None and iloc is not None):
         raise ValueError("Exactly one location argument must be provided.")
     
+    if (loc is None and iloc is None):
+            p_anom_ts = p_anom.sel(time=time_slice)
+            time = p_anom_ts.time.values
+            year_array = pd.to_datetime(np.unique(p_anom_ts.time.dt.year), format="%Y")
     
+            onset_ts = onset_data.sel(year=time_slice)
+            demise_ts = demise_data.sel(year=time_slice)
+        
     if (loc is not None):
         lat = loc[0]
         lon = loc[1]
-        
+        p_anom_ts = p_anom.sel(time=time_slice, lat=lat, lon=lon)
+        time = p_anom_ts.time.values
+        year_array = pd.to_datetime(np.unique(p_anom_ts.time.dt.year), format="%Y")
+    
+        onset_ts = onset_data.sel(year=time_slice, lat=lat, lon=lon)
+        demise_ts = demise_data.sel(year=time_slice, lat=lat, lon=lon)
+    
     if (iloc is not None):
         lat = p_anom.lat[iloc[0]]
         lon = p_anom.lon[iloc[1]]
+            
+        p_anom_ts = p_anom.sel(time=time_slice, lat=lat, lon=lon)
+    
+        time = p_anom_ts.time.values
+        year_array = pd.to_datetime(np.unique(p_anom_ts.time.dt.year), format="%Y")
+    
+        onset_ts = onset_data.sel(year=time_slice, lat=lat, lon=lon)
+        demise_ts = demise_data.sel(year=time_slice, lat=lat, lon=lon)
+    
     
     
     ### Data Wrangling ###
     
     
-    
-    p_anom_ts = p_anom.sel(time=time_slice, lat=lat, lon=lon)
-    
-    time = p_anom_ts.time.values
-    year_array = pd.to_datetime(np.unique(p_anom_ts.time.dt.year), format="%Y")
-    
-    onset_ts = onset_data.sel(year=time_slice, lat=lat, lon=lon)
-    demise_ts = demise_data.sel(year=time_slice, lat=lat, lon=lon)
+
     
 
     
@@ -133,7 +148,7 @@ def plotOnsetTS(p_anom, onset_data, demise_data, time_slice, loc = None, iloc = 
     fig.legend(legend_artists, legend_labels, loc='lower left', bbox_to_anchor=(.1175, 0.802, 0.79, .25), ncols=3, mode='expand', frameon=True, fancybox=False, framealpha=1, edgecolor='white')
 
     # set title to lat/lon
-    ax1.set_title('Location: '+str(np.abs(lat.values))+' S, '+str(lon.values)+' E'+' (Peru)', x=0.5, y=1.05)
+    #ax1.set_title('Location: '+str(np.abs(lat))+' S, '+str(lon)+' E'+' (Peru)', x=0.5, y=1.05)
 
 
 

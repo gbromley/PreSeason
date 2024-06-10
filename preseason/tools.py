@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from scipy import signal
+import scipy.stats as st
 
 #TODO Set this value with a function
 DAYS_IN_YEAR = 365
@@ -270,8 +271,20 @@ def find_ddt_onset(tseries, window=6):
     
     return index
 
+def mean_doy(data, dim='year', YearLen = 365):
+    output = xr.apply_ufunc(
+    st.circmean,
+    data,
+    input_core_dims=[[dim]],
+    output_core_dims=[[]],
+    vectorize= True,
+    dask = 'parallelized',
+    kwargs={'nan_policy':'omit', 'high':YearLen}
+    
+    )
+    return output
 
-def mean_doy(input_array, days_in_year=365):
+def _mean_doy(input_array, days_in_year=365):
     
     """
     Summary:
@@ -306,6 +319,29 @@ def mean_doy(input_array, days_in_year=365):
         doy_mean = doy_mean + days_in_year
     
     return doy_mean
+
+
+""" def _diff_doy(d1, d2, YearLen=365):
+    dx = np.abs(d1 - d2)
+    
+    diff = np.where(dx > YearLen/2, YearLen - dx, dx)
+    
+    
+    return diff
+ """
+
+""" def diff_doy(d1, d2, YearLen=365):
+    
+    #dx = np.abs(d1 - d2)
+    diff_test = xr.where(d1 < d2, d1 - , dx)
+    
+    diff = xr.where(dx > YearLen/2, YearLen - dx, dx)
+    
+    
+    
+    return diff_test
+
+ """
 
 def median_doy(input_array, days_in_year=365):
 
@@ -545,7 +581,134 @@ def generate_p_da(start = 2015, num_years = 5):
 
     return da
 
+def _seasonal_precip_sum(data, time, dates1, dates2):
+    if (dates1[0] > dates2[0]):
+        dates2 = np.roll(dates2, shift=-1)
+        dates2[-1] = np.datetime64("NaT")
+        
+    output = np.zeros(len(dates1))
+    output[:] = np.nan
+    
+    time = np.array(time, dtype="datetime64[D]")
+    dates1 = np.array(dates1, dtype="datetime64[D]")
+    dates2 = np.array(dates2, dtype="datetime64[D]")
+    
+    for i in np.arange(0, len(dates1)):
+        try:
+            if (np.isnan(dates1[i]) or np.isnan(dates2[i])):
+                pass
+            elif (dates1[i] > dates2[i]):
+                pass
+            
+            else:
+                
+                index_onset = np.argwhere(time == dates1[i])[0][0]
+                index_demise = np.argwhere(time == dates2[i])[0][0]
+                
+                output[i] = np.sum(data[index_onset:index_demise])
+        except:
+            
+            print(dates1[i])
+            print(dates2[i])
+            print(time)
+            
+    return output
 
+def calcSeasonPSum(data, onset_dates, demise_dates):
+
+        
+    sums = xr.apply_ufunc(
+    _seasonal_precip_sum,
+    data,
+    time,
+    onset_dates,
+    demise_dates,
+    input_core_dims=[['time'],['time'],['year'],['year']],
+    output_core_dims=[['year']],
+    vectorize= True,
+    dask = 'parallelized',
+    
+)
+    
+    
+    return sums
+    
+
+def calcSeasonPSum(data, time,  onset_dates, demise_dates):
+
+        
+    sums = xr.apply_ufunc(
+    _seasonal_precip_sum,
+    data,
+    time,
+    onset_dates,
+    demise_dates,
+    input_core_dims=[['time'],['time'],['year'],['year']],
+    output_core_dims=[['year']],
+    vectorize= True,
+    dask = 'parallelized',
+    
+)
+    
+    
+    return sums
+
+def calcDates(data):
+    ### Convert days and year to dates, align demise and onset.
+    time = data.year
+    
+    
+    dates = xr.apply_ufunc(
+    _calc_dates,
+    data,
+    time,
+    input_core_dims=[['year'],['year']],
+    output_core_dims=[['year']],
+    vectorize= True,
+    dask = 'parallelized',
+    
+)
+    
+    return dates
+
+    
+
+
+def _calc_dates(data, years):
+    deltas = pd.to_timedelta(data, unit='D')
+    
+    dates = years + deltas
+    
+    return dates
+
+def seasonLength(onset, demise):
+    
+    demise_aligned = np.roll(demise, -1)
+    demise_aligned[-1] = np.nan
+    
+    length = 365 - np.abs(onset - demise_aligned)
+    
+    
+    return length
+
+def calcSeasonLength(onset, demise):
+    
+    
+    
+    length = xr.apply_ufunc(
+    seasonLength,
+    onset,
+    demise,
+    input_core_dims=[['year'], ['year']],
+    output_core_dims=[['year']],
+    vectorize= True,
+    dask = 'parallelized',    
+)
+            
+            
+    
+    
+    return length
 
 
 
