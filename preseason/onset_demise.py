@@ -45,7 +45,7 @@ def B17_analysis_start(data, dim='dayofyear'):
         #TODO Remove vectorize=True
     output = xr.apply_ufunc(
         sf.min_first_harmonic,
-        data.load(),
+        data,
         input_core_dims=[["dayofyear"]],
         exclude_dims=set(["dayofyear"]),
         vectorize=True,
@@ -60,7 +60,7 @@ def onset_LM01(data, startWet):
 
     output = xr.apply_ufunc(
     _onset_LM01,
-    data.load(),
+    data,
     data.time,
     startWet,
     input_core_dims=[["time"],["time"],[]],
@@ -69,7 +69,7 @@ def onset_LM01(data, startWet):
     vectorize= True,
     dask = 'parallelized',
     #output_dtypes = 'datetime64[D]',
-    #output_sizes={"data_jday": 71},
+    output_sizes={"year": 71},
     )
     #time_out = np.unique(data.time.dt.year)
     output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
@@ -79,7 +79,7 @@ def demise_LM01(data, startWet):
 
     output = xr.apply_ufunc(
     _demise_LM01,
-    data.load(),
+    data,
     data.time,
     startWet,
     input_core_dims=[["time"],["time"],[]],
@@ -204,11 +204,11 @@ def _demise_LM01(data, time, startWet):
     return demiseDOY
 
 def onset_B17(data, startWet):
-
+    
     
     output = xr.apply_ufunc(
     _onset_B17,
-    data.load(),
+    data,
     data.time,
     startWet,
     input_core_dims=[["time"],["time"],[]],
@@ -217,7 +217,7 @@ def onset_B17(data, startWet):
     vectorize= True,
     dask = 'parallelized',
     #output_dtypes = 'datetime64[D]',
-    #output_sizes={"data_jday": 71},
+    output_sizes={"year": len(np.unique(data.time.dt.year))},
     )
     #time_out = np.unique(data.time.dt.year)
     output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
@@ -227,7 +227,7 @@ def demise_B17(data, startWet):
     
     output = xr.apply_ufunc(
     _demise_B17,
-    data.load(), #TODO This needs to be fixed
+    data, #TODO This needs to be fixed
     data.time,
     startWet,
     input_core_dims=[["time"],["time"],[]],
@@ -236,7 +236,7 @@ def demise_B17(data, startWet):
     vectorize= True,
     dask = 'parallelized',
     #output_dtypes = 'datetime64[D]',
-    #output_sizes={"data_jday": 71},
+    output_sizes={"year": len(np.unique(data.time.dt.year))},
     )
     #time_out = np.unique(data.time.dt.year)
     output['year'] =  pd.to_datetime(np.unique(data.time.dt.year), format="%Y")
