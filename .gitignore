@@ -137,3 +137,4 @@ dask-worker-space/global.lock
 dask-worker-space/purge.lock
 dask-worker-space/worker-nl39i1b0.dirlock
 dask-worker-space/worker-s4z3_mh5.dirlock
+.DS_Store
